@@ -35,6 +35,9 @@ wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v 
 # Reinitialize Wine environment
 echo "[Wine] Reinitializing Wine environment"
 wineboot -u
+sleep 2
+wineboot -u
+sleep 2
 
 # 再確認
 echo "[Wine] Current Windows TimeZone after change:"
