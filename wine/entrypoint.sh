@@ -13,7 +13,6 @@ stty cols 120 rows 30
 # === 情報表示 ===
 echo "Running on Debian $(cat /etc/debian_version)"
 echo "Current timezone: $(cat /etc/timezone)"
-echo "Now: $(date)"
 wine --version
 
 # === 内部IP設定 ===
@@ -86,12 +85,12 @@ done
 MODIFIED_STARTUP=$(echo ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')
 echo ":/home/container$ ${MODIFIED_STARTUP}"
 
-# === Wineログをリアルタイムに取得するために stdbuf で強制フラッシュ ===
+# === ログファイル出力＆tail監視でコンソール崩れ対策 ===
 LOGFILE="wine_output.log"
 rm -f "$LOGFILE"
 
-# 出力を即座にログファイルへ、tailで追いかける（崩れ防止＋ロス防止）
-stdbuf -oL bash -c "${MODIFIED_STARTUP}" > "$LOGFILE" 2>&1 &
+# Wine を unbuffer 経由で起動し、ログファイルに出力（即時フラッシュ）
+unbuffer bash -c "${MODIFIED_STARTUP}" > "$LOGFILE" 2>&1 &
 
-# tailでPterodactylコンソールへ流す
+# Pterodactyl コンソールにリアルタイム出力
 tail -n 100 -F "$LOGFILE"

@@ -50,6 +50,9 @@ RUN             wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-bui
 RUN             apt update
 RUN             apt install --install-recommends winehq-stable cabextract wine-binfmt -y
 
+# Install expect
+RUN apt update && apt install -y expect
+
 # Set up Winetricks
 RUN	            wget -q -O /usr/sbin/winetricks https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks \
                 && chmod +x /usr/sbin/winetricks
