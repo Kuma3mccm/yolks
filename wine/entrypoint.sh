@@ -20,15 +20,20 @@ echo "[Wine] Current Windows TimeZone before change:"
 wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" || echo "Not set"
 
 # 書き込み用 .reg ファイルを作成してTokyo Standard Timeへ設定
-echo "[Wine] Setting Windows TimeZone to 'Tokyo Standard Time'"
+echo "[Wine] Setting full Tokyo Standard Time timezone data"
 cat <<EOF > /tmp/tokyo_timezone.reg
 Windows Registry Editor Version 5.00
 
 [HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation]
-"Bias"=dword:ffffffc4
-"ActiveTimeBias"=dword:ffffffc4
-"StandardName"="Tokyo Standard Time"
-"DaylightName"="Tokyo Daylight Time"
+"ActiveTimeBias"=dword:fffffde4
+"Bias"=dword:fffffde4
+"DaylightBias"=dword:ffffffc4
+"DaylightName"="@tzres.dll,-631"
+"DaylightStart"=hex:00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+"DynamicDaylightTimeDisabled"=dword:00000000
+"StandardBias"=dword:00000000
+"StandardName"="@tzres.dll,-632"
+"StandardStart"=hex:00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 "TimeZoneKeyName"="Tokyo Standard Time"
 EOF
 
