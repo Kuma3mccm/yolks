@@ -12,6 +12,7 @@ stty cols 250
 # Information output
 echo "Running on Debian $(cat /etc/debian_version)"
 echo "Current timezone: $(cat /etc/timezone)"
+echo "Now time: $(date)"
 wine --version
 
 # Make internal Docker IP address available to processes.
