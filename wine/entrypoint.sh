@@ -15,47 +15,6 @@ echo "Current timezone: $(cat /etc/timezone)"
 echo "Now time: $(date)"
 wine --version
 
-# Show current Wine timezone before change
-echo "[Wine] Confirm TimeZone in both keys"
-wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation"
-wine reg query "HKLM\\SYSTEM\\ControlSet001\\Control\\TimeZoneInformation"
-
-# Set full TimeZone settings for Wine (JST)
-echo "[Wine] Setting full timezone registry values for Tokyo Standard Time"
-for KEY in \
-    "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" \
-    "HKLM\\SYSTEM\\ControlSet001\\Control\\TimeZoneInformation"
-do
-  echo "[Wine] Clearing old TimeZone values from $KEY"
-  wine reg delete "$KEY" /v TimeZoneKeyName /f
-  wine reg delete "$KEY" /v StandardName /f
-  wine reg delete "$KEY" /v DaylightName /f
-
-  echo "[Wine] Writing new TimeZone values to $KEY"
-  wine reg add "$KEY" /v StandardName /t REG_SZ /d "Tokyo Standard Time" /f
-  wine reg add "$KEY" /v TimeZoneKeyName /t REG_SZ /d "Tokyo Standard Time" /f
-  wine reg add "$KEY" /v DaylightName /t REG_SZ /d "東京夏時間" /f
-  wine reg add "$KEY" /v Bias /t REG_DWORD /d 0xfffffde4 /f
-  wine reg add "$KEY" /v ActiveTimeBias /t REG_DWORD /d 0xfffffde4 /f
-  wine reg add "$KEY" /v StandardBias /t REG_DWORD /d 0x0 /f
-  wine reg add "$KEY" /v DaylightBias /t REG_DWORD /d 0x0 /f
-  wine reg add "$KEY" /v DynamicDaylightTimeDisabled /t REG_DWORD /d 0x1 /f
-  wine reg add "$KEY" /v StandardStart /t REG_BINARY /d "00000000000000000000000000000000" /f
-  wine reg add "$KEY" /v DaylightStart /t REG_BINARY /d "00000000000000000000000000000000" /f
-done
-
-# Reinitialize Wine environment
-echo "[Wine] Reinitializing Wine environment"
-wineboot -u
-sleep 2
-wineboot -u
-sleep 2
-
-# 再確認
-echo "[Wine] Confirm TimeZone in both keys"
-wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation"
-wine reg query "HKLM\\SYSTEM\\ControlSet001\\Control\\TimeZoneInformation"
-
 # Make internal Docker IP address available to processes.
 INTERNAL_IP=$(ip route get 1 | awk '{print $(NF-2);exit}')
 export INTERNAL_IP
