@@ -22,14 +22,15 @@ wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" |
 # Set full TimeZone settings for Wine (JST)
 echo "[Wine] Setting full timezone registry values for Tokyo Standard Time"
 wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v TimeZoneKeyName /t REG_SZ /d "Tokyo Standard Time" /f
-wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v Bias /t REG_DWORD /d 0xfffffde4 /f
-wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v ActiveTimeBias /t REG_DWORD /d 0xfffffde4 /f
-wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v DaylightBias /t REG_DWORD /d 0x0 /f
-wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v DynamicDaylightTimeDisabled /t REG_DWORD /d 0x0 /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v StandardName /t REG_SZ /d "Tokyo Standard Time" /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v DaylightName /t REG_SZ /d "Tokyo Daylight Time" /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v Bias /t REG_DWORD /d 0xfffffde4 /f            # -540
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v ActiveTimeBias /t REG_DWORD /d 0xfffffde4 /f # -540
 wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v StandardBias /t REG_DWORD /d 0x0 /f
-wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v DaylightName /t REG_SZ /d "@tzres.dll,-631" /f
-wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v StandardName /t REG_SZ /d "@tzres.dll,-632" /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v DaylightBias /t REG_DWORD /d 0x0 /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v DynamicDaylightTimeDisabled /t REG_DWORD /d 0x1 /f
 wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v StandardStart /t REG_BINARY /d "00000000000000000000000000000000" /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v DaylightStart /t REG_BINARY /d "00000000000000000000000000000000" /f
 
 # Reinitialize Wine environment
 echo "[Wine] Reinitializing Wine environment"
