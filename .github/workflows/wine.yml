@@ -23,6 +23,7 @@ jobs:
           - "8"
           - "9"
           - "10"
+          - latest_jp
           - latest
           - devel
           - staging
