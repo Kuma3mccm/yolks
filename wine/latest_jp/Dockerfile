@@ -1,69 +1,66 @@
 # ---------------------------------------
-# Wine image with real-time console output (UTF-8 & Asia/Tokyo)
+# Generic Wine image based on Wine stable 
 # ---------------------------------------
+FROM            ghcr.io/parkervcp/yolks:debian
 
-FROM ghcr.io/parkervcp/yolks:debian
+LABEL           author="Michael Parker" maintainer="parker@pterodactyl.io"
+LABEL           org.opencontainers.image.licenses=MIT
 
-LABEL author="Kuma3mccm" maintainer="Kuma3mccm"
-LABEL org.opencontainers.image.licenses=MIT
+# Install required packages
+RUN             dpkg --add-architecture i386 \
+                && apt update -y \
+                && apt install -y --no-install-recommends \
+                    gnupg2 \
+                    tzdata \
+                    locales \
+                    software-properties-common \
+                    libntlm0 \
+                    winbind \
+                    xvfb \
+                    xauth \
+                    python3 \
+                    libncurses5:i386 \
+                    libncurses6:i386 \
+                    libsdl2-2.0-0 \
+                    libsdl2-2.0-0:i386 \
+                && ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
+                && echo "Asia/Tokyo" > /etc/timezone \
+                && sed -i '/ja_JP.UTF-8/s/^# //g' /etc/locale.gen \
+                && locale-gen
 
-# Add i386 architecture and install dependencies
-RUN dpkg --add-architecture i386 \
-    && apt update -y \
-    && apt install -y --no-install-recommends \
-        gnupg2 \
-        tzdata \
-        software-properties-common \
-        libntlm0 \
-        winbind \
-        xvfb \
-        xauth \
-        python3 \
-        libncurses5:i386 \
-        libncurses6:i386 \
-        libsdl2-2.0-0 \
-        libsdl2-2.0-0:i386 \
-        locales \
-        expect
+# Set Japanese locale and timezone environment variables
+ENV             TZ=Asia/Tokyo
+ENV             LANG=ja_JP.UTF-8
+ENV             LANGUAGE=ja_JP:ja
+ENV             LC_ALL=ja_JP.UTF-8
 
-# Set timezone and locale
-RUN ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
-    && echo "Asia/Tokyo" > /etc/timezone \
-    && sed -i '/ja_JP.UTF-8/s/^# //g' /etc/locale.gen \
-    && locale-gen
+# Install rcon
+RUN             cd /tmp/ \
+                && curl -sSL https://github.com/gorcon/rcon-cli/releases/download/v0.10.3/rcon-0.10.3-amd64_linux.tar.gz > rcon.tar.gz \
+                && tar xvf rcon.tar.gz \
+                && mv rcon-0.10.3-amd64_linux/rcon /usr/local/bin/
 
-ENV LANG=ja_JP.UTF-8
-ENV LANGUAGE=ja_JP:ja
-ENV LC_ALL=ja_JP.UTF-8
-ENV TZ=Asia/Tokyo
-
-# Install RCON CLI
-RUN cd /tmp/ \
-    && curl -sSL https://github.com/gorcon/rcon-cli/releases/download/v0.10.3/rcon-0.10.3-amd64_linux.tar.gz > rcon.tar.gz \
-    && tar xvf rcon.tar.gz \
-    && mv rcon-0.10.3-amd64_linux/rcon /usr/local/bin/
-
-# Install Wine
-RUN mkdir -pm755 /etc/apt/keyrings \
-    && wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key \
-    && wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/bookworm/winehq-bookworm.sources \
-    && apt update \
-    && apt install --install-recommends winehq-stable cabextract wine-binfmt -y
+# Install wine and with recommends
+RUN             mkdir -pm755 /etc/apt/keyrings
+RUN             wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
+RUN             wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/bookworm/winehq-bookworm.sources
+RUN             apt update
+RUN             apt install --install-recommends winehq-stable cabextract wine-binfmt -y
 
 # Set up Winetricks
-RUN wget -q -O /usr/sbin/winetricks https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks \
-    && chmod +x /usr/sbin/winetricks
+RUN	            wget -q -O /usr/sbin/winetricks https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks \
+                && chmod +x /usr/sbin/winetricks
 
-ENV HOME=/home/container
-ENV WINEPREFIX=/home/container/.wine
-ENV WINEDEBUG=-all
-ENV WINEDLLOVERRIDES="mscoree,mshtml="
-ENV DISPLAY=:0
-ENV DISPLAY_WIDTH=1024
-ENV DISPLAY_HEIGHT=768
-ENV DISPLAY_DEPTH=16
-ENV AUTO_UPDATE=1
-ENV XVFB=1
+ENV             HOME=/home/container
+ENV             WINEPREFIX=/home/container/.wine
+ENV             WINEDEBUG=-all
+ENV             WINEDLLOVERRIDES="mscoree,mshtml="
+ENV             DISPLAY=:0
+ENV             DISPLAY_WIDTH=1024
+ENV             DISPLAY_HEIGHT=768
+ENV             DISPLAY_DEPTH=16
+ENV             AUTO_UPDATE=1
+ENV             XVFB=1
 
-COPY ./../entrypoint.sh /entrypoint.sh
-CMD [ "/bin/bash", "/entrypoint.sh" ]
+COPY            ./../entrypoint.sh /entrypoint.sh
+CMD             [ "/bin/bash", "/entrypoint.sh" ]
