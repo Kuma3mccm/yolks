@@ -1,7 +1,7 @@
 #!/bin/bash
 cd /home/container
 
-# 再度ロケールとタイムゾーン環境変数を設定
+# ロケールとタイムゾーン環境変数を再設定
 export LANG=ja_JP.UTF-8
 export LANGUAGE=ja_JP:ja
 export LC_ALL=ja_JP.UTF-8
@@ -19,17 +19,26 @@ wine --version
 echo "[Wine] Current Windows TimeZone before change:"
 wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" || echo "Not set"
 
-# Set full TimeZone settings for Wine (JST)
+# 書き込み用 .reg ファイルを作成してTokyo Standard Timeへ設定
 echo "[Wine] Setting Windows TimeZone to 'Tokyo Standard Time'"
-wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v TimeZoneKeyName /t REG_SZ /d "Tokyo Standard Time" /f
-wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v Bias /t REG_DWORD /d 0xffffffc4 /f
-wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v ActiveTimeBias /t REG_DWORD /d 0xffffffc4 /f
+cat <<EOF > /tmp/tokyo_timezone.reg
+Windows Registry Editor Version 5.00
 
-# Optional: Force Wine to reread config (some versions ignore this)
+[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation]
+"Bias"=dword:ffffffc4
+"ActiveTimeBias"=dword:ffffffc4
+"StandardName"="Tokyo Standard Time"
+"DaylightName"="Tokyo Daylight Time"
+"TimeZoneKeyName"="Tokyo Standard Time"
+EOF
+
+wine regedit /tmp/tokyo_timezone.reg
+
+# Reinitialize Wine environment
 echo "[Wine] Reinitializing Wine environment"
 wineboot -u
 
-# Confirm
+# 再確認
 echo "[Wine] Current Windows TimeZone after change:"
 wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" || echo "Failed to confirm"
 
@@ -37,7 +46,7 @@ wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" |
 INTERNAL_IP=$(ip route get 1 | awk '{print $(NF-2);exit}')
 export INTERNAL_IP
 
-## just in case someone removed the defaults.
+# Steam認証設定
 if [ "${STEAM_USER}" == "" ]; then
     echo -e "steam user is not set.\n"
     echo -e "Using anonymous user.\n"
@@ -48,66 +57,61 @@ else
     echo -e "user set to ${STEAM_USER}"
 fi
 
-## if auto_update is not set or to 1 update
+# 自動アップデート
 if [ -z ${AUTO_UPDATE} ] || [ "${AUTO_UPDATE}" == "1" ]; then 
-    # Update Source Server
     if [ ! -z ${SRCDS_APPID} ]; then
-	./steamcmd/steamcmd.sh +force_install_dir /home/container +login ${STEAM_USER} ${STEAM_PASS} ${STEAM_AUTH} $( [[ "${WINDOWS_INSTALL}" == "1" ]] && printf %s '+@sSteamCmdForcePlatformType windows' ) +app_update 1007 +app_update ${SRCDS_APPID} $( [[ -z ${SRCDS_BETAID} ]] || printf %s "-beta ${SRCDS_BETAID}" ) $( [[ -z ${SRCDS_BETAPASS} ]] || printf %s "-betapassword ${SRCDS_BETAPASS}" ) $( [[ -z ${HLDS_GAME} ]] || printf %s "+app_set_config 90 mod ${HLDS_GAME}" ) $( [[ -z ${VALIDATE} ]] || printf %s "validate" ) +quit
+        ./steamcmd/steamcmd.sh +force_install_dir /home/container +login ${STEAM_USER} ${STEAM_PASS} ${STEAM_AUTH} $( [[ "${WINDOWS_INSTALL}" == "1" ]] && printf %s '+@sSteamCmdForcePlatformType windows' ) +app_update 1007 +app_update ${SRCDS_APPID} $( [[ -z ${SRCDS_BETAID} ]] || printf %s "-beta ${SRCDS_BETAID}" ) $( [[ -z ${SRCDS_BETAPASS} ]] || printf %s "-betapassword ${SRCDS_BETAPASS}" ) $( [[ -z ${HLDS_GAME} ]] || printf %s "+app_set_config 90 mod ${HLDS_GAME}" ) $( [[ -z ${VALIDATE} ]] || printf %s "validate" ) +quit
     else
         echo -e "No appid set. Starting Server"
     fi
-
 else
     echo -e "Not updating game server as auto update was set to 0. Starting Server"
 fi
 
 if [[ $XVFB == 1 ]]; then
-        Xvfb :0 -screen 0 ${DISPLAY_WIDTH}x${DISPLAY_HEIGHT}x${DISPLAY_DEPTH} &
+    Xvfb :0 -screen 0 ${DISPLAY_WIDTH}x${DISPLAY_HEIGHT}x${DISPLAY_DEPTH} &
 fi
 
-# Install necessary to run packages
+# 初回起動用準備
 echo "First launch will throw some errors. Ignore them"
-
 mkdir -p $WINEPREFIX
 
-# Check if wine-gecko required and install it if so
+# Geckoインストール
 if [[ $WINETRICKS_RUN =~ gecko ]]; then
-        echo "Installing Gecko"
-        WINETRICKS_RUN=${WINETRICKS_RUN/gecko}
+    echo "Installing Gecko"
+    WINETRICKS_RUN=${WINETRICKS_RUN/gecko}
 
-        if [ ! -f "$WINEPREFIX/gecko_x86.msi" ]; then
-                wget -q -O $WINEPREFIX/gecko_x86.msi http://dl.winehq.org/wine/wine-gecko/2.47.4/wine_gecko-2.47.4-x86.msi
-        fi
+    if [ ! -f "$WINEPREFIX/gecko_x86.msi" ]; then
+        wget -q -O $WINEPREFIX/gecko_x86.msi http://dl.winehq.org/wine/wine-gecko/2.47.4/wine_gecko-2.47.4-x86.msi
+    fi
+    if [ ! -f "$WINEPREFIX/gecko_x86_64.msi" ]; then
+        wget -q -O $WINEPREFIX/gecko_x86_64.msi http://dl.winehq.org/wine/wine-gecko/2.47.4/wine_gecko-2.47.4-x86_64.msi
+    fi
 
-        if [ ! -f "$WINEPREFIX/gecko_x86_64.msi" ]; then
-                wget -q -O $WINEPREFIX/gecko_x86_64.msi http://dl.winehq.org/wine/wine-gecko/2.47.4/wine_gecko-2.47.4-x86_64.msi
-        fi
-
-        wine msiexec /i $WINEPREFIX/gecko_x86.msi /qn /quiet /norestart /log $WINEPREFIX/gecko_x86_install.log
-        wine msiexec /i $WINEPREFIX/gecko_x86_64.msi /qn /quiet /norestart /log $WINEPREFIX/gecko_x86_64_install.log
+    wine msiexec /i $WINEPREFIX/gecko_x86.msi /qn /quiet /norestart /log $WINEPREFIX/gecko_x86_install.log
+    wine msiexec /i $WINEPREFIX/gecko_x86_64.msi /qn /quiet /norestart /log $WINEPREFIX/gecko_x86_64_install.log
 fi
 
-# Check if wine-mono required and install it if so
+# Monoインストール
 if [[ $WINETRICKS_RUN =~ mono ]]; then
-        echo "Installing mono"
-        WINETRICKS_RUN=${WINETRICKS_RUN/mono}
+    echo "Installing mono"
+    WINETRICKS_RUN=${WINETRICKS_RUN/mono}
 
-        if [ ! -f "$WINEPREFIX/mono.msi" ]; then
-                wget -q -O $WINEPREFIX/mono.msi https://dl.winehq.org/wine/wine-mono/9.1.0/wine-mono-9.1.0-x86.msi
-        fi
+    if [ ! -f "$WINEPREFIX/mono.msi" ]; then
+        wget -q -O $WINEPREFIX/mono.msi https://dl.winehq.org/wine/wine-mono/9.1.0/wine-mono-9.1.0-x86.msi
+    fi
 
-        wine msiexec /i $WINEPREFIX/mono.msi /qn /quiet /norestart /log $WINEPREFIX/mono_install.log
+    wine msiexec /i $WINEPREFIX/mono.msi /qn /quiet /norestart /log $WINEPREFIX/mono_install.log
 fi
 
-# List and install other packages
+# その他パッケージをインストール
 for trick in $WINETRICKS_RUN; do
-        echo "Installing $trick"
-        winetricks -q $trick
+    echo "Installing $trick"
+    winetricks -q $trick
 done
 
-# Replace Startup Variables
+# スタートアップコマンドを置換して実行
 MODIFIED_STARTUP=$(echo ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')
 echo ":/home/container$ ${MODIFIED_STARTUP}"
 
-# Run the Server
 eval ${MODIFIED_STARTUP}
