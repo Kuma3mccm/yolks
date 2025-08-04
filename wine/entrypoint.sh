@@ -22,8 +22,8 @@ wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" |
 # Set full TimeZone settings for Wine (JST)
 echo "[Wine] Setting full timezone registry values for Tokyo Standard Time"
 wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v TimeZoneKeyName /t REG_SZ /d "Tokyo Standard Time" /f
-wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v Bias /t REG_DWORD /d 0xffffffc4 /f
-wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v ActiveTimeBias /t REG_DWORD /d 0xffffffc4 /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v Bias /t REG_DWORD /d 0xfffffde4 /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v ActiveTimeBias /t REG_DWORD /d 0xfffffde4 /f
 wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v DaylightBias /t REG_DWORD /d 0x0 /f
 wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v DynamicDaylightTimeDisabled /t REG_DWORD /d 0x0 /f
 wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v StandardBias /t REG_DWORD /d 0x0 /f
