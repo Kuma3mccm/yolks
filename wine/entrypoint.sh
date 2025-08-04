@@ -6,11 +6,11 @@ export TZ=Asia/Tokyo
 export LANG=ja_JP.UTF-8
 export LANGUAGE=ja_JP:ja
 export TERM=xterm-256color
-export COLUMNS=120
+export COLUMNS=180
 export LINES=30
 
 # stty で端末幅を強制設定（折り返し防止）
-stty cols 120 rows 30
+stty cols 180 rows 30
 
 # === 情報表示 ===
 echo "Running on Debian $(cat /etc/debian_version)"
