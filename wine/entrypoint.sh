@@ -1,7 +1,7 @@
 #!/bin/bash
 cd /home/container
 
-# 再度ロケールとタイムゾーン環境変数を設定（Dockerfileと合わせて確実に）
+# 再度ロケールとタイムゾーン環境変数を設定
 export LANG=ja_JP.UTF-8
 export LANGUAGE=ja_JP:ja
 export LC_ALL=ja_JP.UTF-8
@@ -14,22 +14,24 @@ echo "Running on Debian $(cat /etc/debian_version)"
 echo "Current timezone: $(cat /etc/timezone)"
 echo "Now time: $(date)"
 wine --version
-# Show current Windows (Wine) timezone before modification
-echo "[Wine] Current Windows TimeZone before change:"
-wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v TimeZoneKeyName || echo "Not set"
 
-# Set TimeZone to Tokyo Standard Time (JST)
+# Show current Wine timezone before change
+echo "[Wine] Current Windows TimeZone before change:"
+wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" || echo "Not set"
+
+# Set full TimeZone settings for Wine (JST)
 echo "[Wine] Setting Windows TimeZone to 'Tokyo Standard Time'"
 wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v TimeZoneKeyName /t REG_SZ /d "Tokyo Standard Time" /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v Bias /t REG_DWORD /d 0xffffffc4 /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v ActiveTimeBias /t REG_DWORD /d 0xffffffc4 /f
 
-# Optionally re-initialize Wine registry environment
+# Optional: Force Wine to reread config (some versions ignore this)
 echo "[Wine] Reinitializing Wine environment"
-wineboot --init
+wineboot -u
 
-# Show updated timezone
+# Confirm
 echo "[Wine] Current Windows TimeZone after change:"
-wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v TimeZoneKeyName || echo "Failed to confirm"
-
+wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" || echo "Failed to confirm"
 
 # Make internal Docker IP address available to processes.
 INTERNAL_IP=$(ip route get 1 | awk '{print $(NF-2);exit}')
