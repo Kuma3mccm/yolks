@@ -86,10 +86,12 @@ done
 MODIFIED_STARTUP=$(echo ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')
 echo ":/home/container$ ${MODIFIED_STARTUP}"
 
-# === ログファイル出力＆tail監視でコンソール崩れ対策 ===
+# === Wineログをリアルタイムに取得するために stdbuf で強制フラッシュ ===
 LOGFILE="wine_output.log"
 rm -f "$LOGFILE"
-bash -c "${MODIFIED_STARTUP}" > "$LOGFILE" 2>&1 &
 
-# === リアルタイム出力（文字崩れなし・日本語OK） ===
-tail -F "$LOGFILE"
+# 出力を即座にログファイルへ、tailで追いかける（崩れ防止＋ロス防止）
+stdbuf -oL bash -c "${MODIFIED_STARTUP}" > "$LOGFILE" 2>&1 &
+
+# tailでPterodactylコンソールへ流す
+tail -n 100 -F "$LOGFILE"
