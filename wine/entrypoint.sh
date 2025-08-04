@@ -14,6 +14,22 @@ echo "Running on Debian $(cat /etc/debian_version)"
 echo "Current timezone: $(cat /etc/timezone)"
 echo "Now time: $(date)"
 wine --version
+# Show current Windows (Wine) timezone before modification
+echo "[Wine] Current Windows TimeZone before change:"
+wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v TimeZoneKeyName || echo "Not set"
+
+# Set TimeZone to Tokyo Standard Time (JST)
+echo "[Wine] Setting Windows TimeZone to 'Tokyo Standard Time'"
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v TimeZoneKeyName /t REG_SZ /d "Tokyo Standard Time" /f
+
+# Optionally re-initialize Wine registry environment
+echo "[Wine] Reinitializing Wine environment"
+wineboot --init
+
+# Show updated timezone
+echo "[Wine] Current Windows TimeZone after change:"
+wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v TimeZoneKeyName || echo "Failed to confirm"
+
 
 # Make internal Docker IP address available to processes.
 INTERNAL_IP=$(ip route get 1 | awk '{print $(NF-2);exit}')
