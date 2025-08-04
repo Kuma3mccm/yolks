@@ -22,9 +22,16 @@ wine reg query "HKLM\\SYSTEM\\ControlSet001\\Control\\TimeZoneInformation"
 
 # Set full TimeZone settings for Wine (JST)
 echo "[Wine] Setting full timezone registry values for Tokyo Standard Time"
-for KEY in "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" "HKLM\\SYSTEM\\ControlSet001\\Control\\TimeZoneInformation"
+for KEY in \
+    "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" \
+    "HKLM\\SYSTEM\\ControlSet001\\Control\\TimeZoneInformation"
 do
-  echo "[Wine] Setting timezone info at $KEY"
+  echo "[Wine] Clearing old TimeZone values from $KEY"
+  wine reg delete "$KEY" /v TimeZoneKeyName /f
+  wine reg delete "$KEY" /v StandardName /f
+  wine reg delete "$KEY" /v DaylightName /f
+
+  echo "[Wine] Writing new TimeZone values to $KEY"
   wine reg add "$KEY" /v TimeZoneKeyName /t REG_SZ /d "Tokyo Standard Time" /f
   wine reg add "$KEY" /v StandardName /t REG_SZ /d "東京標準時" /f
   wine reg add "$KEY" /v DaylightName /t REG_SZ /d "東京夏時間" /f
