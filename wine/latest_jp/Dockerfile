@@ -1,74 +1,83 @@
 # ---------------------------------------
-# Generic Wine image based on Wine stable 
-# with Japanese font and timezone support
+# Wine image with real-time console output (UTF-8 & Asia/Tokyo)
 # ---------------------------------------
-FROM            ghcr.io/parkervcp/yolks:debian
 
-LABEL           author="Michael Parker" maintainer="parker@pterodactyl.io"
-LABEL           org.opencontainers.image.licenses=MIT
+FROM ghcr.io/parkervcp/yolks:debian
 
-# タイムゾーンを Tokyo に設定
-ENV TZ=Asia/Tokyo
+LABEL author="Kuma3mccm" maintainer="Kuma3mccm"
+LABEL org.opencontainers.image.licenses=MIT
 
-# Install required packages
-RUN             dpkg --add-architecture i386 \
-                && apt update -y \
-                && apt install -y --no-install-recommends \
-                    gnupg2 \
-                    tzdata \
-                    software-properties-common \
-                    libntlm0 \
-                    winbind \
-                    xvfb \
-                    xauth \
-                    python3 \
-                    libncurses5:i386 \
-                    libncurses6:i386 \
-                    libsdl2-2.0-0 \
-                    libsdl2-2.0-0:i386 \
-                    fonts-noto-cjk \
-                    locales \
-                && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
-                && echo $TZ > /etc/timezone \
-                && sed -i '/ja_JP.UTF-8/s/^# //' /etc/locale.gen \
-                && locale-gen
+# Add i386 architecture and install dependencies
+RUN dpkg --add-architecture i386 \
+    && apt update -y \
+    && apt install -y --no-install-recommends \
+        gnupg2 \
+        tzdata \
+        software-properties-common \
+        libntlm0 \
+        winbind \
+        xvfb \
+        xauth \
+        python3 \
+        libncurses5:i386 \
+        libncurses6:i386 \
+        libsdl2-2.0-0 \
+        libsdl2-2.0-0:i386 \
+        locales \
+        build-essential \
+        gcc-multilib \
+        make \
+        git \
+        libtool \
+        libc6-dev-i386 \
+        expect
 
-# ロケール設定（LC_ALL は未設定）
+# Set timezone and locale
+RUN ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
+    && echo "Asia/Tokyo" > /etc/timezone \
+    && sed -i '/ja_JP.UTF-8/s/^# //g' /etc/locale.gen \
+    && locale-gen
+
 ENV LANG=ja_JP.UTF-8
 ENV LANGUAGE=ja_JP:ja
+ENV LC_ALL=ja_JP.UTF-8
 
-# Install rcon
-RUN             cd /tmp/ \
-                && curl -sSL https://github.com/gorcon/rcon-cli/releases/download/v0.10.3/rcon-0.10.3-amd64_linux.tar.gz > rcon.tar.gz \
-                && tar xvf rcon.tar.gz \
-                && mv rcon-0.10.3-amd64_linux/rcon /usr/local/bin/
+# Build 32-bit libstdbuf.so
+RUN git clone https://github.com/coreutils/coreutils.git /tmp/coreutils \
+    && cd /tmp/coreutils \
+    && ./bootstrap \
+    && ./configure CFLAGS="-m32" --prefix=/opt/coreutils32 \
+    && make -j$(nproc) libstdbuf.so \
+    && mkdir -p /opt/coreutils32/libexec/coreutils \
+    && cp src/libstdbuf.so /opt/coreutils32/libexec/coreutils/
 
-# Install wine and with recommends
-RUN             mkdir -pm755 /etc/apt/keyrings
-RUN             wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key
-RUN             wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/bookworm/winehq-bookworm.sources
-RUN             apt update
-RUN             apt install --install-recommends winehq-stable cabextract wine-binfmt -y
+# Install RCON CLI
+RUN cd /tmp/ \
+    && curl -sSL https://github.com/gorcon/rcon-cli/releases/download/v0.10.3/rcon-0.10.3-amd64_linux.tar.gz > rcon.tar.gz \
+    && tar xvf rcon.tar.gz \
+    && mv rcon-0.10.3-amd64_linux/rcon /usr/local/bin/
 
-# Install bsdutils
-RUN apt update && apt install -y bsdutils
+# Install Wine
+RUN mkdir -pm755 /etc/apt/keyrings \
+    && wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key \
+    && wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/bookworm/winehq-bookworm.sources \
+    && apt update \
+    && apt install --install-recommends winehq-stable cabextract wine-binfmt -y
 
 # Set up Winetricks
-RUN	            wget -q -O /usr/sbin/winetricks https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks \
-                && chmod +x /usr/sbin/winetricks
+RUN wget -q -O /usr/sbin/winetricks https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks \
+    && chmod +x /usr/sbin/winetricks
 
-ENV             HOME=/home/container
-ENV             WINEPREFIX=/home/container/.wine
-ENV             WINEDEBUG=-all
-ENV             WINEDLLOVERRIDES="mscoree,mshtml="
-ENV             DISPLAY=:0
-ENV             DISPLAY_WIDTH=1024
-ENV             DISPLAY_HEIGHT=768
-ENV             DISPLAY_DEPTH=16
-ENV             AUTO_UPDATE=1
-ENV             XVFB=1
-ENV             COLUMNS=120
-ENV             LINES=30
+ENV HOME=/home/container
+ENV WINEPREFIX=/home/container/.wine
+ENV WINEDEBUG=-all
+ENV WINEDLLOVERRIDES="mscoree,mshtml="
+ENV DISPLAY=:0
+ENV DISPLAY_WIDTH=1024
+ENV DISPLAY_HEIGHT=768
+ENV DISPLAY_DEPTH=16
+ENV AUTO_UPDATE=1
+ENV XVFB=1
 
-COPY            ./../entrypoint.sh /entrypoint.sh
-CMD             [ "/bin/bash", "/entrypoint.sh" ]
+COPY ./../entrypoint.sh /entrypoint.sh
+CMD [ "/bin/bash", "/entrypoint.sh" ]
