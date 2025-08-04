@@ -32,8 +32,8 @@ do
   wine reg delete "$KEY" /v DaylightName /f
 
   echo "[Wine] Writing new TimeZone values to $KEY"
+  wine reg add "$KEY" /v StandardName /t REG_SZ /d "Tokyo Standard Time" /f
   wine reg add "$KEY" /v TimeZoneKeyName /t REG_SZ /d "Tokyo Standard Time" /f
-  wine reg add "$KEY" /v StandardName /t REG_SZ /d "東京標準時" /f
   wine reg add "$KEY" /v DaylightName /t REG_SZ /d "東京夏時間" /f
   wine reg add "$KEY" /v Bias /t REG_DWORD /d 0xfffffde4 /f
   wine reg add "$KEY" /v ActiveTimeBias /t REG_DWORD /d 0xfffffde4 /f
