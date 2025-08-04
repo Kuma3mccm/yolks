@@ -15,17 +15,29 @@ echo "Current timezone: $(cat /etc/timezone)"
 echo "Now time: $(date)"
 wine --version
 
-# Check timezone before
-echo "[Wine] TimeZone before tzutil:"
-wine cmd /c "tzutil /g" || echo "Failed to get timezone"
+# Show current Wine timezone before change
+echo "[Wine] Current Windows TimeZone before change:"
+wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" || echo "Failed to confirm"
 
-# Set timezone to JST
-echo "[Wine] Setting TimeZone to 'Tokyo Standard Time' via tzutil"
-wine cmd /c "tzutil /s \"Tokyo Standard Time\"" || echo "Failed to set timezone"
+# Set full TimeZone settings for Wine (JST)
+echo "[Wine] Setting full timezone registry values for Tokyo Standard Time"
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v TimeZoneKeyName /t REG_SZ /d "Tokyo Standard Time" /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v Bias /t REG_DWORD /d 0xffffffc4 /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v ActiveTimeBias /t REG_DWORD /d 0xffffffc4 /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v DaylightBias /t REG_DWORD /d 0x0 /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v DynamicDaylightTimeDisabled /t REG_DWORD /d 0x0 /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v StandardBias /t REG_DWORD /d 0x0 /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v DaylightName /t REG_SZ /d "@tzres.dll,-631" /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v StandardName /t REG_SZ /d "@tzres.dll,-632" /f
+wine reg add "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" /v StandardStart /t REG_BINARY /d "00000000000000000000000000000000" /f
 
-# Confirm
-echo "[Wine] TimeZone after tzutil:"
-wine cmd /c "tzutil /g" || echo "Failed to get timezone"
+# Reinitialize Wine environment
+echo "[Wine] Reinitializing Wine environment"
+wineboot -u
+
+# 再確認
+echo "[Wine] Current Windows TimeZone after change:"
+wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" || echo "Failed to confirm"
 
 # Make internal Docker IP address available to processes.
 INTERNAL_IP=$(ip route get 1 | awk '{print $(NF-2);exit}')
