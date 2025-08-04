@@ -1,7 +1,7 @@
 #!/bin/bash
 cd /home/container
 
-# ターミナル・環境変数設定
+# 環境変数・ロケール・タイムゾーン設定
 export TZ=Asia/Tokyo
 export LANG=ja_JP.UTF-8
 export LANGUAGE=ja_JP:ja
@@ -14,7 +14,6 @@ stty cols 120 rows 30
 # 情報出力
 echo "Running on Debian $(cat /etc/debian_version)"
 echo "Current timezone: $(cat /etc/timezone)"
-echo "Now: $(date)"
 wine --version
 
 # Docker内部IP取得
@@ -79,9 +78,5 @@ done
 MODIFIED_STARTUP=$(echo ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')
 echo ":/home/container$ ${MODIFIED_STARTUP}"
 
-# 出力を即時反映するために32bit stdbuf.soを使用
-export LD_PRELOAD="/opt/coreutils32/libexec/coreutils/libstdbuf.so"
-export STDBUF_PTS=1
-
-# 実行（stderr含めて即時コンソールに反映）
-stdbuf -oL -eL bash -c "${MODIFIED_STARTUP}"
+# 直接実行、STDOUTをPterodactylに即時反映
+exec env -u LD_PRELOAD -u STDBUF_PTS ${MODIFIED_STARTUP}

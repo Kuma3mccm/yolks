@@ -24,12 +24,6 @@ RUN dpkg --add-architecture i386 \
         libsdl2-2.0-0 \
         libsdl2-2.0-0:i386 \
         locales \
-        build-essential \
-        gcc-multilib \
-        make \
-        git \
-        libtool \
-        libc6-dev-i386 \
         expect
 
 # Set timezone and locale
@@ -41,15 +35,7 @@ RUN ln -sf /usr/share/zoneinfo/Asia/Tokyo /etc/localtime \
 ENV LANG=ja_JP.UTF-8
 ENV LANGUAGE=ja_JP:ja
 ENV LC_ALL=ja_JP.UTF-8
-
-# Build 32-bit libstdbuf.so
-RUN git clone https://github.com/coreutils/coreutils.git /tmp/coreutils \
-    && cd /tmp/coreutils \
-    && ./bootstrap \
-    && ./configure CFLAGS="-m32" --prefix=/opt/coreutils32 \
-    && make -j$(nproc) libstdbuf.so \
-    && mkdir -p /opt/coreutils32/libexec/coreutils \
-    && cp src/libstdbuf.so /opt/coreutils32/libexec/coreutils/
+ENV TZ=Asia/Tokyo
 
 # Install RCON CLI
 RUN cd /tmp/ \
