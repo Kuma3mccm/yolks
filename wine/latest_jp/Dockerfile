@@ -23,13 +23,13 @@ RUN             dpkg --add-architecture i386 \
                     libncurses6:i386 \
                     libsdl2-2.0-0 \
                     libsdl2-2.0-0:i386 \
-                && ln -sf /usr/share/zoneinfo/Etc/GMT+9 /etc/localtime \
-                && echo "Etc/GMT+9" > /etc/timezone \
+                && ln -sf /usr/share/zoneinfo/Etc/GMT-9 /etc/localtime \
+                && echo "Etc/GMT-9" > /etc/timezone \
                 && sed -i '/ja_JP.UTF-8/s/^# //g' /etc/locale.gen \
                 && locale-gen
 
 # Set Japanese locale and timezone environment variables
-ENV             TZ=Etc/GMT+9
+ENV             TZ=Etc/GMT-9
 ENV             LANG=ja_JP.UTF-8
 ENV             LANGUAGE=ja_JP:ja
 ENV             LC_ALL=ja_JP.UTF-8
