@@ -15,37 +15,17 @@ echo "Current timezone: $(cat /etc/timezone)"
 echo "Now time: $(date)"
 wine --version
 
-# Show current Wine timezone before change
-echo "[Wine] Current Windows TimeZone before change:"
-wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" || echo "Not set"
+# Check timezone before
+echo "[Wine] TimeZone before tzutil:"
+wine cmd /c "tzutil /g" || echo "Failed to get timezone"
 
-# 書き込み用 .reg ファイルを作成してTokyo Standard Timeへ設定
-echo "[Wine] Setting full Tokyo Standard Time timezone data"
-cat <<EOF > /tmp/tokyo_timezone.reg
-Windows Registry Editor Version 5.00
+# Set timezone to JST
+echo "[Wine] Setting TimeZone to 'Tokyo Standard Time' via tzutil"
+wine cmd /c "tzutil /s \"Tokyo Standard Time\"" || echo "Failed to set timezone"
 
-[HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation]
-"ActiveTimeBias"=dword:fffffde4
-"Bias"=dword:fffffde4
-"DaylightBias"=dword:ffffffc4
-"DaylightName"="@tzres.dll,-631"
-"DaylightStart"=hex:00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-"DynamicDaylightTimeDisabled"=dword:00000000
-"StandardBias"=dword:00000000
-"StandardName"="@tzres.dll,-632"
-"StandardStart"=hex:00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
-"TimeZoneKeyName"="Tokyo Standard Time"
-EOF
-
-wine regedit /tmp/tokyo_timezone.reg
-
-# Reinitialize Wine environment
-echo "[Wine] Reinitializing Wine environment"
-wineboot -u
-
-# 再確認
-echo "[Wine] Current Windows TimeZone after change:"
-wine reg query "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" || echo "Failed to confirm"
+# Confirm
+echo "[Wine] TimeZone after tzutil:"
+wine cmd /c "tzutil /g" || echo "Failed to get timezone"
 
 # Make internal Docker IP address available to processes.
 INTERNAL_IP=$(ip route get 1 | awk '{print $(NF-2);exit}')
