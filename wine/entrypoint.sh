@@ -26,8 +26,8 @@ for KEY in "HKLM\\SYSTEM\\CurrentControlSet\\Control\\TimeZoneInformation" "HKLM
 do
   echo "[Wine] Setting timezone info at $KEY"
   wine reg add "$KEY" /v TimeZoneKeyName /t REG_SZ /d "Tokyo Standard Time" /f
-  wine reg add "$KEY" /v StandardName /t REG_SZ /d "Tokyo Standard Time" /f
-  wine reg add "$KEY" /v DaylightName /t REG_SZ /d "Tokyo Daylight Time" /f
+  wine reg add "$KEY" /v StandardName /t REG_SZ /d "東京標準時" /f
+  wine reg add "$KEY" /v DaylightName /t REG_SZ /d "東京夏時間" /f
   wine reg add "$KEY" /v Bias /t REG_DWORD /d 0xfffffde4 /f
   wine reg add "$KEY" /v ActiveTimeBias /t REG_DWORD /d 0xfffffde4 /f
   wine reg add "$KEY" /v StandardBias /t REG_DWORD /d 0x0 /f
