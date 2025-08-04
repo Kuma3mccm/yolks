@@ -1,5 +1,6 @@
 # ---------------------------------------
 # Generic Wine image based on Wine stable 
+# with Japanese font and timezone support
 # ---------------------------------------
 FROM            ghcr.io/parkervcp/yolks:debian
 
@@ -7,7 +8,7 @@ LABEL           author="Michael Parker" maintainer="parker@pterodactyl.io"
 LABEL           org.opencontainers.image.licenses=MIT
 
 # タイムゾーンを Tokyo に設定
-ENV             TZ=Asia/Tokyo
+ENV TZ=Asia/Tokyo
 
 # Install required packages
 RUN             dpkg --add-architecture i386 \
@@ -25,8 +26,16 @@ RUN             dpkg --add-architecture i386 \
                     libncurses6:i386 \
                     libsdl2-2.0-0 \
                     libsdl2-2.0-0:i386 \
+                    fonts-noto-cjk \
+                    locales \
                 && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
-                && echo $TZ > /etc/timezone
+                && echo $TZ > /etc/timezone \
+                && sed -i '/ja_JP.UTF-8/s/^# //' /etc/locale.gen \
+                && locale-gen
+
+# ロケール設定（LC_ALL は未設定）
+ENV LANG=ja_JP.UTF-8
+ENV LANGUAGE=ja_JP:ja
 
 # Install rcon
 RUN             cd /tmp/ \
@@ -55,6 +64,8 @@ ENV             DISPLAY_HEIGHT=768
 ENV             DISPLAY_DEPTH=16
 ENV             AUTO_UPDATE=1
 ENV             XVFB=1
+ENV             COLUMNS=120
+ENV             LINES=30
 
 COPY            ./../entrypoint.sh /entrypoint.sh
 CMD             [ "/bin/bash", "/entrypoint.sh" ]
