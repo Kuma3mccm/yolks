@@ -7,9 +7,9 @@ export LANG=ja_JP.UTF-8
 export LANGUAGE=ja_JP:ja
 export LC_ALL=ja_JP.UTF-8
 export TERM=xterm-256color
-export COLUMNS=120
+export COLUMNS=250
 export LINES=30
-stty cols 120 rows 30
+stty cols 250 rows 30
 
 # 情報出力
 echo "Running on Debian $(cat /etc/debian_version)"
