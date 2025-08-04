@@ -6,22 +6,20 @@ export TZ=Asia/Tokyo
 export LANG=ja_JP.UTF-8
 export LANGUAGE=ja_JP:ja
 export TERM=xterm-256color
-export COLUMNS=180
+export COLUMNS=120
 export LINES=30
-
-# stty で端末幅を強制設定（折り返し防止）
-stty cols 180 rows 30
+stty cols 120 rows 30
 
 # === 情報表示 ===
 echo "Running on Debian $(cat /etc/debian_version)"
 echo "Current timezone: $(cat /etc/timezone)"
 wine --version
 
-# Make internal Docker IP address available to processes.
+# === 内部IP設定 ===
 INTERNAL_IP=$(ip route get 1 | awk '{print $(NF-2);exit}')
 export INTERNAL_IP
 
-# === Steam user設定 ===
+# === Steamユーザー設定 ===
 if [ "${STEAM_USER}" == "" ]; then
     echo -e "steam user is not set.\n"
     echo -e "Using anonymous user.\n"
@@ -35,7 +33,7 @@ fi
 # === 自動アップデート処理 ===
 if [ -z ${AUTO_UPDATE} ] || [ "${AUTO_UPDATE}" == "1" ]; then 
     if [ ! -z ${SRCDS_APPID} ]; then
-	    ./steamcmd/steamcmd.sh +force_install_dir /home/container +login ${STEAM_USER} ${STEAM_PASS} ${STEAM_AUTH} $( [[ "${WINDOWS_INSTALL}" == "1" ]] && printf %s '+@sSteamCmdForcePlatformType windows' ) +app_update 1007 +app_update ${SRCDS_APPID} $( [[ -z ${SRCDS_BETAID} ]] || printf %s "-beta ${SRCDS_BETAID}" ) $( [[ -z ${SRCDS_BETAPASS} ]] || printf %s "-betapassword ${SRCDS_BETAPASS}" ) $( [[ -z ${HLDS_GAME} ]] || printf %s "+app_set_config 90 mod ${HLDS_GAME}" ) $( [[ -z ${VALIDATE} ]] || printf %s "validate" ) +quit
+        ./steamcmd/steamcmd.sh +force_install_dir /home/container +login ${STEAM_USER} ${STEAM_PASS} ${STEAM_AUTH} $( [[ "${WINDOWS_INSTALL}" == "1" ]] && printf %s '+@sSteamCmdForcePlatformType windows' ) +app_update 1007 +app_update ${SRCDS_APPID} $( [[ -z ${SRCDS_BETAID} ]] || printf %s "-beta ${SRCDS_BETAID}" ) $( [[ -z ${SRCDS_BETAPASS} ]] || printf %s "-betapassword ${SRCDS_BETAPASS}" ) $( [[ -z ${HLDS_GAME} ]] || printf %s "+app_set_config 90 mod ${HLDS_GAME}" ) $( [[ -z ${VALIDATE} ]] || printf %s "validate" ) +quit
     else
         echo -e "No appid set. Starting Server"
     fi
@@ -43,54 +41,54 @@ else
     echo -e "Not updating game server as auto update was set to 0. Starting Server"
 fi
 
-# === XVFB起動 ===
+# === XVFB 起動 ===
 if [[ $XVFB == 1 ]]; then
     Xvfb :0 -screen 0 ${DISPLAY_WIDTH}x${DISPLAY_HEIGHT}x${DISPLAY_DEPTH} &
 fi
 
-# 初回エラーメッセージについて案内
 echo "First launch will throw some errors. Ignore them"
 
+# === WINEPREFIX 初期化 ===
 mkdir -p $WINEPREFIX
 
-# === Geckoのインストール ===
+# === Gecko インストール ===
 if [[ $WINETRICKS_RUN =~ gecko ]]; then
     echo "Installing Gecko"
     WINETRICKS_RUN=${WINETRICKS_RUN/gecko}
-
     if [ ! -f "$WINEPREFIX/gecko_x86.msi" ]; then
         wget -q -O $WINEPREFIX/gecko_x86.msi http://dl.winehq.org/wine/wine-gecko/2.47.4/wine_gecko-2.47.4-x86.msi
     fi
-
     if [ ! -f "$WINEPREFIX/gecko_x86_64.msi" ]; then
         wget -q -O $WINEPREFIX/gecko_x86_64.msi http://dl.winehq.org/wine/wine-gecko/2.47.4/wine_gecko-2.47.4-x86_64.msi
     fi
-
     wine msiexec /i $WINEPREFIX/gecko_x86.msi /qn /quiet /norestart /log $WINEPREFIX/gecko_x86_install.log
     wine msiexec /i $WINEPREFIX/gecko_x86_64.msi /qn /quiet /norestart /log $WINEPREFIX/gecko_x86_64_install.log
 fi
 
-# === Monoのインストール ===
+# === Mono インストール ===
 if [[ $WINETRICKS_RUN =~ mono ]]; then
     echo "Installing mono"
     WINETRICKS_RUN=${WINETRICKS_RUN/mono}
-
     if [ ! -f "$WINEPREFIX/mono.msi" ]; then
         wget -q -O $WINEPREFIX/mono.msi https://dl.winehq.org/wine/wine-mono/9.1.0/wine-mono-9.1.0-x86.msi
     fi
-
     wine msiexec /i $WINEPREFIX/mono.msi /qn /quiet /norestart /log $WINEPREFIX/mono_install.log
 fi
 
-# === Winetricksパッケージのインストール ===
+# === その他の Winetricks パッケージ ===
 for trick in $WINETRICKS_RUN; do
     echo "Installing $trick"
     winetricks -q $trick
 done
 
-# === Startupコマンド変数展開 ===
+# === STARTUPコマンド変数展開 ===
 MODIFIED_STARTUP=$(echo ${STARTUP} | sed -e 's/{{/${/g' -e 's/}}/}/g')
 echo ":/home/container$ ${MODIFIED_STARTUP}"
 
-# === 仮想端末経由で実行（表示崩れ回避）===
-exec script -q -c "${MODIFIED_STARTUP}" /dev/null
+# === ログファイル出力＆tail監視でコンソール崩れ対策 ===
+LOGFILE="wine_output.log"
+rm -f "$LOGFILE"
+bash -c "${MODIFIED_STARTUP}" > "$LOGFILE" 2>&1 &
+
+# === リアルタイム出力（文字崩れなし・日本語OK） ===
+tail -F "$LOGFILE"
