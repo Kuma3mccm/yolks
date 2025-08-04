@@ -13,6 +13,7 @@ stty cols 120 rows 30
 # === 情報表示 ===
 echo "Running on Debian $(cat /etc/debian_version)"
 echo "Current timezone: $(cat /etc/timezone)"
+echo "Now: $(date)"
 wine --version
 
 # === 内部IP設定 ===
