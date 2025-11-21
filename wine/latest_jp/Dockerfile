@@ -19,6 +19,7 @@ RUN             dpkg --add-architecture i386 \
                     xvfb \
                     xauth \
                     python3 \
+					python3-pip \
                     libncurses5:i386 \
                     libncurses6:i386 \
                     libsdl2-2.0-0 \
