@@ -22,6 +22,7 @@ jobs:
           - "7"
           - "8"
           - "9"
+          - "9_jp"
           - "10"
           - latest_jp
           - latest
