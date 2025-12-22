@@ -22,15 +22,16 @@ RUN			apt -y install \
 				lib32stdc++6 \
 				libcurl3t64-gnutls:i386 \
 				libsdl2-2.0-0:i386 \
-				iproute2 gdb \
+				iproute2 \
+				gdb \
 				libsdl1.2debian \
 				telnet \
 				net-tools \
-				netcat tzdata \
+				netcat-openbsd\
+				tzdata \
 				libtinfo6:i386 \
 				libcurl4-gnutls-dev:i386 \
 				libncurses6:i386 \
-				libcurl4-gnutls:i386 \
 				faketime:i386 \
 				lib32tinfo6 \
 				lib32z1 \

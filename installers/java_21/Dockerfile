@@ -1,5 +1,5 @@
-#!/bin/ash
-# Copyright (c) 2021 Matthew Penner
+#
+# Copyright (c) 2022 oliver194
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,25 +20,15 @@
 # SOFTWARE.
 #
 
-# Default the TZ environment variable to UTC.
-TZ=${TZ:-UTC}
-export TZ
+FROM        --platform=$TARGETOS/$TARGETARCH eclipse-temurin:21-jdk-noble
 
-# Set environment variable that holds the Internal Docker IP
-INTERNAL_IP=$(ip route get 1 | awk '{print $(NF-2);exit}')
-export INTERNAL_IP
+LABEL       author="parkervcp" maintainer="parker@pelican.dev"
 
-# Switch to the container's working directory
-cd /home/container || exit 1
+LABEL       org.opencontainers.image.source="https://github.com/pelican-eggs/yolks"
+LABEL       org.opencontainers.image.licenses=MIT
 
-# Convert all of the "{{VARIABLE}}" parts of the command into the expected shell
-# variable format of "${VARIABLE}" before evaluating the string and automatically
-# replacing the values.
-PARSED=$(echo "$STARTUP" | sed -e 's/{{/${/g' -e 's/}}/}/g')
+ENV         DEBIAN_FRONTEND=noninteractive
 
-# Display the command we're running in the output, and then execute it with eval
-printf "\033[1m\033[33mcontainer~ \033[0m"
-echo "$PARSED"
-# shellcheck disable=SC2086
-eval "$PARSED"
-
+RUN         apt update \
+		&& apt upgrade -y \
+		&& apt -y --no-install-recommends install ca-certificates curl git unzip zip tar jq
